@@ -18,7 +18,7 @@ A good spec empowers a team. When a spec says "system responds within 200ms for 
 
 ## Be concise
 
-A spec is a communication tool, not a novel. Every section should be as short as it can be while still being clear. The Why should be 2-3 sentences, not a paragraph. The user story should be one sentence. Acceptance criteria should be 3-5 items — if you're writing more, you're either being too granular or the spec needs splitting. Out of Scope and Open Questions should be short bullet lists, not essays. Respect the reader's time.
+A spec is a communication tool, not a novel. Every section should be as short as it can be while still being clear. The Why should be 2-3 sentences, not a paragraph. The user story should be one sentence. Out of Scope and Open Questions should be short bullet lists, not essays. Respect the reader's time.
 
 ## Core principles
 
@@ -63,9 +63,12 @@ Keep it to a single overarching story where possible. If the spec genuinely serv
 
 ### What (Acceptance Criteria)
 
-A short, numbered list of observable, testable outcomes — **aim for 3-5 criteria, never more than 5.** Each criterion should be something the team can demonstrate in a review or verify with a test — without knowing the implementation in advance.
+A numbered list of observable, testable outcomes. Each criterion should be something the team can demonstrate in a review or verify with a test — without knowing the implementation in advance. Include as many criteria as genuinely needed to define "done", but keep each one sharp and distinct.
 
-Fewer, sharper criteria are better than many vague ones. A spec with 12 acceptance criteria is a spec that hasn't been prioritised. If you're tempted to write more than 5, ask yourself which ones truly define "done" vs which are nice-to-haves or implementation details in disguise. Merge related criteria and drop anything the team would naturally handle without being told.
+Before adding a criterion, check:
+- **Is it already covered?** Don't restate an existing criterion in different words. If two criteria would pass or fail together, merge them.
+- **Is it an implementation detail in disguise?** If the team would naturally handle it without being told, drop it.
+- **Is it a separate concern?** If a criterion addresses a fundamentally different problem, it may belong in its own spec.
 
 Guidelines for writing criteria:
 - Start each with a verb describing the observable behaviour ("Users can...", "System displays...", "Data is available within...")
