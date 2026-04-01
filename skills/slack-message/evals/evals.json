@@ -1,0 +1,54 @@
+{
+  "skill_name": "slack-message",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Someone just asked in #engineering 'hey can anyone explain how our retry logic works when an API call fails? been seeing some inconsistent behavior'. I want to reply to their thread. For context: we use exponential backoff starting at 500ms, max 3 retries, with jitter to avoid thundering herd. After 3 failures we dead-letter to SQS for manual review. The channel ID is C01AB2C3D4E and thread_ts is '1712345678.123456'. Use draft mode so I can review before sending.",
+      "expected_output": "A well-structured Slack message using blocks API that explains the retry logic clearly, with header, TL;DR section, numbered steps, a code example if appropriate, and emojis used as visual anchors. Should use slack_send_message_draft.",
+      "files": [],
+      "expectations": [
+        "Uses the Slack MCP to compose the message (slack_send_message_draft or slack_send_message)",
+        "Message uses Slack blocks API with at least a header block and section or rich_text block",
+        "Message includes emojis as visual anchors (e.g. 💡 🔍 📋 ⚠️)",
+        "Explains exponential backoff starting at 500ms",
+        "Explains max 3 retries",
+        "Mentions dead-lettering to SQS after failures",
+        "Uses numbered list or structured steps to explain the flow",
+        "Includes a TL;DR or summary upfront"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Can you message my teammate Sam on Slack about two PRs I need reviewed for the new user onboarding flow? PR #312 adds the welcome email template (https://github.com/myco/app/pull/312) and PR #313 hooks it into the signup controller (https://github.com/myco/app/pull/313). They build on each other so need reviewing in order. Trying to get them merged by end of the week. Use draft mode.",
+      "expected_output": "A PR notification message sent as a draft to Sam, using blocks with a clear header, intro context, one section per PR with a button linking to the PR, branch/dependency info, and a context block with the timeline. Should search for Sam's user ID first, then compose using blocks with button accessories.",
+      "files": [],
+      "expectations": [
+        "Searches for Sam's user profile using the Slack MCP (slack_search_users)",
+        "Uses slack_send_message_draft to compose the message",
+        "Message uses Slack blocks API with a header block",
+        "Message has a section or context explaining the two PRs are related and should be reviewed in order",
+        "Includes a section for PR #312 with a link/button to the GitHub URL",
+        "Includes a section for PR #313 with a link/button to the GitHub URL",
+        "Includes emojis in the message",
+        "Mentions the end-of-week timeline"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "There's a thread in #platform where someone asked 'why do we use Redis for session storage rather than just writing to the database?' — I want to reply explaining our reasoning. The main points are: Redis is ~10x faster for key-value lookups (sub-millisecond vs 5-10ms for DB), sessions are ephemeral so we don't need durability guarantees, and it reduces load on the primary DB. We also do session expiry natively with Redis TTLs rather than a cron job. Channel ID is C05XY67890, thread_ts is '1713001234.567890'. Use draft mode.",
+      "expected_output": "A thoughtful technical reply explaining the Redis session storage decision, using blocks with a clear structure, TL;DR, and bullet points or rich text for each reason. Emojis used as visual anchors. Should feel like a senior engineer's considered response, not a list dump.",
+      "files": [],
+      "expectations": [
+        "Uses slack_send_message_draft to compose the message",
+        "Message uses Slack blocks API with at least header and section/rich_text blocks",
+        "Includes emojis as visual anchors throughout",
+        "Mentions the performance advantage (~10x faster / sub-millisecond latency)",
+        "Explains sessions are ephemeral / no need for durability",
+        "Mentions reduced load on primary DB",
+        "Mentions Redis TTLs for session expiry",
+        "Message has a TL;DR or lead answer before the detail",
+        "Uses a list or structured format for the individual reasons"
+      ]
+    }
+  ]
+}
