@@ -1,0 +1,89 @@
+{
+  "skill_name": "workflow",
+  "evals": [
+    {
+      "id": 1,
+      "name": "greenfield-no-issue",
+      "prompt": "I need to build a notifications system that sends email digests to users when they have unread messages. Can you help me get this started?",
+      "expected_output": "Orchestrator identifies no existing issue (step 1a), offers to create one (1b/1c), then proceeds to spec writing (2b). Should NOT jump straight to coding.",
+      "files": [],
+      "assertions": [
+        {"text": "identifies_no_issue: Response recognizes no existing JIRA issue and offers to create one", "type": "qualitative"},
+        {"text": "starts_at_initialization: Response begins at phase 1 (issue tracking), not jumping to implementation", "type": "qualitative"},
+        {"text": "asks_before_creating: Response confirms with user before creating the issue (human-oriented, not auto-creating)", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "existing-issue-no-spec",
+      "prompt": "Pick up ENG-234 — it's got a title but not much else in the description. Let's flesh it out.",
+      "expected_output": "Orchestrator loads the issue (step 1a → found), detects the description lacks a structured spec (step 2a → no spec), and proceeds to write a spec (2b). Should ask clarifying questions about the work rather than jumping to implementation.",
+      "files": [],
+      "assertions": [
+        {"text": "loads_issue_first: Response indicates fetching/loading the JIRA issue before taking action", "type": "qualitative"},
+        {"text": "identifies_missing_spec: Response recognizes the issue description is bare and needs a spec", "type": "qualitative"},
+        {"text": "proceeds_to_spec_writing: Response moves toward writing a spec, not jumping to planning or coding", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spec-exists-needs-plan",
+      "prompt": "PROJ-789 has a solid spec already. I want to figure out how we're going to build it.",
+      "expected_output": "Orchestrator loads the issue (1a → found), sees the spec exists (2a → yes), checks for a plan (3a → no plan), and proceeds to create an implementation plan (3b). Should NOT rewrite the spec.",
+      "files": [],
+      "assertions": [
+        {"text": "skips_spec_writing: Response does NOT attempt to rewrite or revalidate the existing spec", "type": "qualitative"},
+        {"text": "identifies_missing_plan: Response recognizes that an implementation plan is needed", "type": "qualitative"},
+        {"text": "proceeds_to_planning: Response moves to create an implementation plan (step 3b)", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 4,
+      "name": "ready-to-implement",
+      "prompt": "OK the plan for PROJ-789 looks great, let's start coding.",
+      "expected_output": "Orchestrator recognises this as plan approval (step 3d → approved), updates the issue status (3e), and begins implementation (4a). Should NOT ask to rewrite the plan or spec.",
+      "files": [],
+      "assertions": [
+        {"text": "recognizes_approval: Response treats the user message as plan approval and moves forward", "type": "qualitative"},
+        {"text": "updates_status: Response mentions updating the JIRA issue status to In Progress", "type": "qualitative"},
+        {"text": "begins_implementation: Response starts coding/implementation, does not re-plan or re-spec", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 5,
+      "name": "implementation-done-needs-pr",
+      "prompt": "I've finished implementing the changes for PROJ-789, can you open a PR?",
+      "expected_output": "Orchestrator identifies work is at the end of implementation phase, proceeds to draft a PR (4b), then pauses for user review (4c). Should link the PR to the JIRA issue.",
+      "files": [],
+      "assertions": [
+        {"text": "proceeds_to_pr: Response moves to draft a PR (step 4b)", "type": "qualitative"},
+        {"text": "links_to_issue: Response mentions linking the PR back to the JIRA issue", "type": "qualitative"},
+        {"text": "pauses_for_review: Response indicates the user should review the PR before proceeding (step 4c)", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 6,
+      "name": "pr-feedback-loop",
+      "prompt": "The PR looks mostly good but the error handling in the webhook controller is too aggressive — it swallows errors silently. Can you fix that and also add a test for the retry logic?",
+      "expected_output": "Orchestrator identifies this as PR feedback (step 4c → not approved, go to 4d), addresses the specific feedback, then returns to 4c for re-review. Should NOT create a new PR or update the JIRA status yet.",
+      "files": [],
+      "assertions": [
+        {"text": "addresses_feedback: Response focuses on the specific error handling and test feedback", "type": "qualitative"},
+        {"text": "does_not_restart: Response does NOT create a new PR, update JIRA status to Done, or go back to planning", "type": "qualitative"},
+        {"text": "returns_to_review: After addressing feedback, response indicates returning to PR review", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 7,
+      "name": "ready-for-review",
+      "prompt": "The PR is approved and merged for PROJ-789. Let's wrap this up.",
+      "expected_output": "Orchestrator moves to review phase: updates JIRA status (5a) and notifies the team on Slack (5b). Should ask which Slack channel to notify if not obvious.",
+      "files": [],
+      "assertions": [
+        {"text": "updates_status_to_done: Response mentions transitioning the JIRA issue to Done or In Review", "type": "qualitative"},
+        {"text": "notifies_on_slack: Response mentions sending a Slack notification to the team", "type": "qualitative"},
+        {"text": "links_both_artifacts: Response references both the PR and the JIRA issue in the wrap-up", "type": "qualitative"}
+      ]
+    }
+  ]
+}
