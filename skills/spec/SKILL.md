@@ -123,9 +123,8 @@ Read the appropriate template from `assets/` and fill in every `{{placeholder}}`
 
 **Epic** (`assets/epic.md`):
 - `{{SUMMARY}}` → spec Title
-- `{{epic_goal}}` → the overarching outcome this initiative achieves; synthesise from Why + Who (1-2 sentences)
-- `{{context}}` → from the spec's Why section (plain text — no italics, no label prefix)
-- `{{child_1}}`, `{{child_2}}`, `{{child_3}}` → the key sub-features or stories this epic will contain, populating the Child Stories section; derive from the What section or suggest logical breakdowns. Add more bullet lines if the scope warrants it.
+- `{{objective}}` → a concise statement of what this initiative sets out to achieve; this is the record of original intent — write it to be meaningful even if nothing else about the epic ever gets updated (1-2 sentences, outcome-focused)
+- `{{why}}` → from the spec's Why section; the problem being solved and why it matters now (2-3 sentences, plain text)
 
 **Story** (`assets/story.md`):
 - `{{SUMMARY}}` → spec Title
