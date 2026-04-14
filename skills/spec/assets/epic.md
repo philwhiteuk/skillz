@@ -9,3 +9,11 @@
 ## 📋 Why
 
 {{why}}
+
+---
+
+## 🎯 Desired Outcomes
+
+{{#each desired_outcomes}}
+- {{this}}
+{{/each}}

@@ -125,6 +125,7 @@ Read the appropriate template from `assets/` and fill in every `{{placeholder}}`
 - `{{SUMMARY}}` → spec Title
 - `{{objective}}` → a concise statement of what this initiative sets out to achieve; this is the record of original intent — write it to be meaningful even if nothing else about the epic ever gets updated (1-2 sentences, outcome-focused)
 - `{{why}}` → from the spec's Why section; the problem being solved and why it matters now (2-3 sentences, plain text)
+- `desired_outcomes` → the observable, measurable results that would signal success; derive from the What section or synthesise from the spec's intent. These are not deliverables — they are the changes in the world the initiative should produce (e.g. "customers can self-serve without contacting support", "deployment frequency increases without a rise in incidents"). Bullet list, 2-4 items.
 
 **Story** (`assets/story.md`):
 - `{{SUMMARY}}` → spec Title
