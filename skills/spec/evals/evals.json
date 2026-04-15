@@ -1,0 +1,50 @@
+{
+  "skill_name": "spec",
+  "evals": [
+    {
+      "id": 4,
+      "prompt": "We've got a production bug. Users who registered before June 2024 can't reset their password — they click the reset link in the email and get a blank white page. Users who registered after that date are fine. Started getting reports about this on Monday, seems to have been broken for a while without us noticing. Can you write this up as a ticket?",
+      "expected_output": "A Bug ticket with Expected (what the reset flow should do) and Actual (blank page for pre-June-2024 users) sections. Should not prescribe a fix — just document the discrepancy.",
+      "assertions": [
+        "Spec is classified as a Bug",
+        "Spec has an Expected section describing correct system behaviour",
+        "Spec has an Actual section describing the broken behaviour",
+        "Expected and Actual sections are clearly distinct — they describe different things",
+        "Spec does not prescribe a fix or implementation approach",
+        "The affected cohort (users registered before June 2024) is captured",
+        "Spec title is outcome-focused or describes the failure, not a solution",
+        "Entire spec is under 40 lines of Markdown"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "We keep getting timeouts on the checkout endpoint during peak traffic. The p99 latency spikes to 8s but we don't know why — could be a slow DB query, an external payment API, or something in our own business logic. We need to investigate before we can fix anything. Can you make a ticket for this?",
+      "expected_output": "A Spike ticket framing the investigation as a question to answer, with concrete deliverables (a finding and recommendation), not a feature or fix. Should be timeboxed research.",
+      "assertions": [
+        "Spec is classified as a Spike",
+        "Spike description frames the work as a question to investigate, not a task to complete",
+        "Spec includes at least two concrete deliverables the spike should produce",
+        "Spec does not prescribe the answer or solution upfront",
+        "Context section explains why this investigation is needed now",
+        "Spec does not prescribe specific technologies or tools for the investigation",
+        "Spec title includes 'Spike' or is otherwise clearly research-oriented",
+        "Entire spec is under 40 lines of Markdown"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Our CI pipeline takes 18 minutes to run. The main culprit is the integration test suite — it runs sequentially and doesn't use any parallelism. We know what needs doing: split the test suite into shards and run them in parallel across multiple runners. This is an engineering task, no user-facing change. Can you write it up?",
+      "expected_output": "A Task ticket (not a Story — no direct end-user value) with a clear task description and verifiable acceptance criteria. The primary beneficiary is the engineering team.",
+      "assertions": [
+        "Spec is classified as a Task",
+        "Task description clearly states what needs to be done",
+        "Acceptance criteria are verifiable and measurable",
+        "Spec does not prescribe specific CI tools or runner infrastructure",
+        "Context section explains why this work matters (pipeline speed impact)",
+        "Acceptance criteria focus on outcomes, not implementation steps",
+        "Spec does not classify as a Story — the work has no direct end-user benefit",
+        "Entire spec is under 40 lines of Markdown"
+      ]
+    }
+  ]
+}
