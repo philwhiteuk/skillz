@@ -61,11 +61,10 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 1c | Create issue | auto | Create the issue using available tracker tools. Save the key/link for the rest of the workflow. |
 | 1d | Name session | auto | Rename the session to `ISSUE-KEY: short subtitle` — the subtitle is 3–5 words summarising the issue title. Use `/rename` to set it. |
 | 2a | Spec exists? | ? decision | Check the issue description for structured acceptance criteria. A bare title or one-liner means no spec. If no spec → 2b. If spec exists → 3a. |
-| 2b | Write a spec | auto | Delegate to the spec-write skill. |
-| 2c | Template spec | auto | Delegate to the spec-template skill. |
-| 2d | Update issue | auto | Write the rendered spec into the issue description. |
-| 2e | Spec approval | **[human]** | Present the spec. "Does this capture the work? Anything to change?" If no → back to 2b. If yes → 2f. |
-| 2f | Update status | auto | Transition the issue to reflect refinement progress. |
+| 2b | Write & format spec | auto | Delegate to the spec skill — it writes a solution-agnostic spec and classifies/formats it as the right ticket type (Story, Task, Spike, Bug, or Epic). |
+| 2c | Update issue | auto | Write the rendered spec into the issue description. |
+| 2d | Spec approval | **[human]** | Present the spec. "Does this capture the work? Anything to change?" If no → back to 2b. If yes → 2e. |
+| 2e | Update status | auto | Transition the issue to reflect refinement progress. |
 | 3a | Plan exists? | ? decision | Check issue comments for an implementation plan (ordered steps, technical approach). If no plan → 3b. If plan exists → 3d. |
 | 3b | Plan to implement | auto | Load the spec from the issue description into context. Read the codebase to understand the landscape. Produce an implementation plan: ordered steps, files to touch, key decisions. Do not pause to ask for input — go straight from reading the spec to producing the plan. |
 | 3c | Comment on issue | auto | Persist the plan as a comment on the issue. |
@@ -121,4 +120,4 @@ Quick reference:
 
 **Don't repeat work.** Spec exists? Skip to planning. Plan exists? Skip to implementation.
 
-**Delegate to skills.** spec-write for 2b, spec-template for 2c, slack-message for 5b.
+**Delegate to skills.** spec for 2b, slack-message for 5b.
