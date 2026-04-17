@@ -1,4 +1,4 @@
-# llm-skills
+# skillz
 
 A collection of general-purpose LLM skills that I use in my day-to-day development workflow. Each skill is a structured prompt that helps automate common engineering tasks like writing specifications and classifying work items. The prompts can be adapted for use with any LLM-powered coding tool.
 
