@@ -28,6 +28,7 @@ When a step says "delegate to the X skill", that is an instruction to **actually
 | Plan | `plan` | [`../plan/SKILL.md`](../plan/SKILL.md) |
 | Slack message | `slack-message` | [`../slack-message/SKILL.md`](../slack-message/SKILL.md) |
 | Code review (4c) | `code-review-and-quality` | external — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) |
+| Issue tracker (optional) | e.g. `github-projects` | external — see **Issue tracker** |
 
 **Resolve each name against the installed skills.** The same skill may be installed with a plugin prefix (`develop:spec`) or without one (`spec`, e.g. when symlinked from `~/.agents/skills`). Invoke whichever variant appears in your available-skills list; never hard-code the prefix.
 
@@ -92,13 +93,16 @@ Where the project is silent, use this skill's defaults. Project rules can add ga
 
 This workflow uses an issue tracker as the single source of truth — specs go in the description, plans go in comments, status reflects reality.
 
-The issue tracker could be any tool available via MCP (JIRA, Linear, GitHub Issues, etc.). To determine which one to use:
+The issue tracker could be JIRA, Linear, GitHub Issues, GitLab or anything else, reached through an MCP server, a CLI, or a skill. To determine which one to use, and how:
 
 1. If the user provides a link or issue key, infer the tracker from its format
-2. If issue-tracking MCP tools are available, use them
-3. If multiple trackers are available and it's ambiguous, ask the user once: "I see tools for both X and Y — which do you use for tracking?"
+2. If the project docs name the tracker or how to drive it (CLI commands, project board, field and option IDs), follow them
+3. If a tracker skill is installed (e.g. `github-projects`), invoke it for tracker operations instead of hand-rolling commands
+4. If issue-tracking MCP tools are available, use them
+5. Otherwise look for an authenticated CLI: `gh auth status`, `glab auth status`, `jira me`, `linear whoami`
+6. If multiple trackers are available and it's ambiguous, ask the user once: "I see tools for both X and Y — which do you use for tracking?"
 
-Never hardcode a specific tracker. Use whatever tools are available.
+Never hardcode a specific tracker. Use whatever is available.
 
 ## The workflow
 
