@@ -5,7 +5,7 @@ description: >
   you wouldn't say out loud, the answer buried under a build-up, and comments that narrate what
   the code already says. Use as a last pass before sending authored prose (specs, PR descriptions,
   messages, docs), as a lens over a diff, or when asked to de-slop, tighten, or trim.
-  Referenced by `develop:dlc` at self-review; also invokable directly.
+  Referenced by `dlc` at self-review; also invokable directly.
 ---
 
 # No word salad

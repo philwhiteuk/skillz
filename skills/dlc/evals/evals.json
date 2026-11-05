@@ -8,7 +8,7 @@
       "expected_output": "Orchestrator identifies no existing issue (step 1a), offers to create one (1b/1c), then proceeds to spec writing (2b). Should NOT jump straight to coding.",
       "files": [],
       "assertions": [
-        {"text": "identifies_no_issue: Response recognizes no existing JIRA issue and offers to create one", "type": "qualitative"},
+        {"text": "identifies_no_issue: Response recognizes there is no existing issue in the tracker and offers to create one", "type": "qualitative"},
         {"text": "starts_at_initialization: Response begins at phase 1 (issue tracking), not jumping to implementation", "type": "qualitative"},
         {"text": "asks_before_creating: Response confirms with user before creating the issue (human-oriented, not auto-creating)", "type": "qualitative"}
       ]
@@ -20,7 +20,7 @@
       "expected_output": "Orchestrator loads the issue (step 1a → found), detects the description lacks a structured spec (step 2a → no spec), and proceeds to write a spec (2b). Should ask clarifying questions about the work rather than jumping to implementation.",
       "files": [],
       "assertions": [
-        {"text": "loads_issue_first: Response indicates fetching/loading the JIRA issue before taking action", "type": "qualitative"},
+        {"text": "loads_issue_first: Response indicates fetching/loading the issue from the tracker before taking action", "type": "qualitative"},
         {"text": "identifies_missing_spec: Response recognizes the issue description is bare and needs a spec", "type": "qualitative"},
         {"text": "proceeds_to_spec_writing: Response moves toward writing a spec, not jumping to planning or coding", "type": "qualitative"}
       ]
@@ -41,11 +41,11 @@
       "id": 4,
       "name": "ready-to-implement",
       "prompt": "OK the plan for PROJ-789 looks great, let's start coding.",
-      "expected_output": "Orchestrator recognises this as plan approval (step 3d → approved), updates the issue status (3e), and begins implementation (4a). Should NOT ask to rewrite the plan or spec.",
+      "expected_output": "Orchestrator recognises this as plan approval (step 3c → approved), moves the issue to in-progress (3d), and begins implementation (4a). Should NOT ask to rewrite the plan or spec.",
       "files": [],
       "assertions": [
         {"text": "recognizes_approval: Response treats the user message as plan approval and moves forward", "type": "qualitative"},
-        {"text": "updates_status: Response mentions updating the JIRA issue status to In Progress", "type": "qualitative"},
+        {"text": "updates_status: Response mentions moving the issue to in-progress (or the tracker's equivalent status) before coding", "type": "qualitative"},
         {"text": "begins_implementation: Response starts coding/implementation, does not re-plan or re-spec", "type": "qualitative"}
       ]
     },
@@ -53,12 +53,12 @@
       "id": 5,
       "name": "implementation-done-needs-pr",
       "prompt": "I've finished implementing the changes for PROJ-789, can you open a PR?",
-      "expected_output": "Orchestrator identifies work is at the end of implementation phase, proceeds to draft a PR (4b), then runs a fresh-context self-review (4c) and addresses its findings (4d) before pausing for user review (4e). Should link the PR to the JIRA issue and keep it in draft throughout.",
+      "expected_output": "Orchestrator identifies work is at the end of implementation phase, proceeds to draft a PR (4b), then runs a fresh-context self-review (4c) and addresses its findings (4d) before pausing for user review (4e). Should link the PR to the tracker issue and keep it in draft throughout.",
       "files": [],
       "assertions": [
         {"text": "proceeds_to_pr: Response moves to draft a PR (step 4b)", "type": "qualitative"},
-        {"text": "links_to_issue: Response mentions linking the PR back to the JIRA issue", "type": "qualitative"},
-        {"text": "runs_self_review: Response spawns a fresh/no-context sub-agent to self-review the PR (running the code-review-and-quality five-axis review) and address findings before handing to the human", "type": "qualitative"},
+        {"text": "links_to_issue: Response mentions linking the PR back to the issue, e.g. with a closing keyword like 'Closes #N' or a link", "type": "qualitative"},
+        {"text": "runs_self_review: Response spawns a fresh/no-context sub-agent to self-review the PR with an installed review skill and address findings before handing to the human", "type": "qualitative"},
         {"text": "pauses_for_review: After self-review, response indicates the user should review the draft PR before it is marked ready (step 4e)", "type": "qualitative"}
       ]
     },
@@ -66,11 +66,11 @@
       "id": 6,
       "name": "pr-feedback-loop",
       "prompt": "The PR looks mostly good but the error handling in the webhook controller is too aggressive — it swallows errors silently. Can you fix that and also add a test for the retry logic?",
-      "expected_output": "Orchestrator identifies this as PR feedback (step 4e → not approved, go to 4f), addresses the specific feedback, then returns to 4e for re-review. Should NOT create a new PR or update the JIRA status yet.",
+      "expected_output": "Orchestrator identifies this as PR feedback (step 4e → not approved, go to 4f), addresses the specific feedback, then returns to 4e for re-review. Should NOT create a new PR or update the issue status yet.",
       "files": [],
       "assertions": [
         {"text": "addresses_feedback: Response focuses on the specific error handling and test feedback", "type": "qualitative"},
-        {"text": "does_not_restart: Response does NOT create a new PR, update JIRA status to Done, or go back to planning", "type": "qualitative"},
+        {"text": "does_not_restart: Response does NOT create a new PR, move the issue to done, or go back to planning", "type": "qualitative"},
         {"text": "returns_to_review: After addressing feedback, response indicates returning to PR review", "type": "qualitative"}
       ]
     },
@@ -78,20 +78,19 @@
       "id": 7,
       "name": "ready-for-review",
       "prompt": "The PR is approved and merged for PROJ-789. Let's wrap this up.",
-      "expected_output": "Orchestrator moves to review phase: updates JIRA status (5a) and notifies the team on Slack (5b). Should ask which Slack channel to notify if not obvious.",
+      "expected_output": "Orchestrator moves to review phase: moves the issue to done (5a) and notifies the team on Slack (5b). Should ask which Slack channel to notify if not obvious.",
       "files": [],
       "assertions": [
-        {"text": "updates_status_to_done: Response mentions transitioning the JIRA issue to Done or In Review", "type": "qualitative"},
+        {"text": "updates_status_to_done: Response mentions moving the issue to done (or the tracker's equivalent status)", "type": "qualitative"},
         {"text": "notifies_on_slack: Response mentions sending a Slack notification to the team", "type": "qualitative"},
-        {"text": "links_both_artifacts: Response references both the PR and the JIRA issue in the wrap-up", "type": "qualitative"}
+        {"text": "links_both_artifacts: Response references both the PR and the issue in the wrap-up", "type": "qualitative"}
       ]
-    }
-    ,
+    },
     {
       "id": 8,
       "name": "pr-naming-conventions",
-      "prompt": "The plan for PROJ-789 is approved. We're good to start coding — when we're done I'll need you to create a branch and open the PR.",
-      "expected_output": "Orchestrator recognises plan approval (step 3d → approved), updates status (3e), begins implementation (4a), and when opening the PR uses the correct naming: branch = 'PROJ-789/<kebab-issue-name>' and PR title = '[PROJ-789] - <brief description>'. Should NOT use freeform naming like 'feature/notifications' or 'feat: add notifications'.",
+      "prompt": "The plan for PROJ-789 is approved. We're good to start coding — when we're done I'll need you to create a branch and open the PR. The repo has no naming conventions of its own.",
+      "expected_output": "Orchestrator recognises plan approval (step 3c → approved), updates status (3d), begins implementation (4a), and, because the project sets no naming rules, falls back to the skill's naming table: branch = 'PROJ-789/<kebab-issue-name>' and PR title = '[PROJ-789] - <brief description>'. Should NOT use freeform naming like 'feature/notifications' or 'feat: add notifications'.",
       "files": [],
       "assertions": [
         {"text": "branch_naming: Branch name follows the pattern '<issue-id>/<kebab-case-name>' (e.g. 'PROJ-789/some-feature-name'), not a freeform name", "type": "qualitative"},
@@ -103,7 +102,7 @@
       "id": 9,
       "name": "spec-written-before-approval",
       "prompt": "ENG-501 just has a title 'Add password reset flow'. Let's write a spec for it.",
-      "expected_output": "Orchestrator writes the spec and updates the issue description immediately (step 2c), THEN tells the user to review it in the tracker via a link (step 2d). It should NOT present the full spec inline in chat and wait for approval before writing it to the issue.",
+      "expected_output": "Orchestrator writes the spec and updates the issue description immediately (step 2b), THEN tells the user to review it in the tracker via a link (step 2c). It should NOT present the full spec inline in chat and wait for approval before writing it to the issue.",
       "files": [],
       "assertions": [
         {"text": "spec_written_to_issue_first: Response indicates updating the issue description with the spec before asking for approval — it does not show the full spec inline in chat pending approval", "type": "qualitative"},
@@ -115,7 +114,7 @@
       "id": 10,
       "name": "clickable-links-always",
       "prompt": "PROJ-100 is approved, plan looks good, let's implement and open a PR.",
-      "expected_output": "Orchestrator recognises plan approval (3d → approved), updates status (3e), implements (4a), opens a PR (4b), and at every point references the issue and PR as full markdown hyperlinks — not bare IDs like 'PROJ-100' or '#42'.",
+      "expected_output": "Orchestrator recognises plan approval (3c → approved), updates status (3d), implements (4a), opens a PR (4b), and at every point references the issue and PR as full markdown hyperlinks — not bare IDs like 'PROJ-100' or '#42'.",
       "files": [],
       "assertions": [
         {"text": "issue_link_is_clickable: Any reference to the issue uses a markdown hyperlink (e.g. [PROJ-100](https://...)) rather than the bare ID alone", "type": "qualitative"},
@@ -127,13 +126,49 @@
       "id": 11,
       "name": "self-review-before-human",
       "prompt": "The draft PR for PROJ-789 is open. Get it ready for me to look at.",
-      "expected_output": "Orchestrator recognises the draft PR exists but has not been self-reviewed yet (step 4c). It spawns a fresh sub-agent with no session context, instructs it to run the code-review-and-quality five-axis review over the PR diff and post findings as inline comments, then addresses the Critical/required findings in follow-up commits (4d), keeping the PR in draft, before handing the link to the human (4e). Should NOT mark the PR ready for review, and should NOT review the PR itself in-context.",
+      "expected_output": "Orchestrator recognises the draft PR exists but has not been self-reviewed yet (step 4c). It spawns a fresh sub-agent with no session context, instructs it to run the best installed review skill plus the slop lens over the PR diff and post findings as inline comments, then addresses the Critical/required findings in follow-up commits (4d), keeping the PR in draft, before handing the link to the human (4e). Should NOT mark the PR ready for review, and should NOT review the PR itself in-context.",
       "files": [],
       "assertions": [
         {"text": "spawns_fresh_subagent: Response delegates the review to a new sub-agent with no additional context from this session, rather than reviewing the diff in-context itself", "type": "qualitative"},
-        {"text": "runs_review_skill: Response has the sub-agent run the code-review-and-quality skill (five-axis: correctness, readability, architecture, security, performance) over the PR and annotate findings on the PR", "type": "qualitative"},
+        {"text": "runs_review_skill: Response has the sub-agent invoke an installed review skill (e.g. code-review-and-quality, or a fallback such as code-review) over the PR and annotate findings on the PR", "type": "qualitative"},
         {"text": "addresses_findings_in_commits: Response addresses the review findings in follow-up commit(s) before handing to the human", "type": "qualitative"},
         {"text": "keeps_pr_draft: Response keeps the PR in draft and does NOT mark it ready for review without explicit user approval", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 12,
+      "name": "project-conventions-override",
+      "prompt": "The plan for #31 on GitHub is approved — implement it and open the PR. Our AGENTS.md says commit subjects are plain sentences with no prefixes, the repo only allows squash merges, and every PR body must include 'Closes #N'.",
+      "expected_output": "Orchestrator follows the project's conventions over its naming table. The PR title is a plain sentence with no '[#31]' prefix, the body includes 'Closes #31', and the branch has no '#' (e.g. '31-short-slug').",
+      "files": [],
+      "assertions": [
+        {"text": "follows_title_rule: PR title is a plain sentence with no '[#31] - ' or other prefix", "type": "qualitative"},
+        {"text": "closes_keyword: PR body includes 'Closes #31'", "type": "qualitative"},
+        {"text": "branch_has_no_hash: Branch name contains no '#' character (e.g. '31-short-slug')", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 13,
+      "name": "status-mapping",
+      "prompt": "I've approved the spec on #44. Our project board columns are Backlog, Refinement, Todo, In Progress, Code Review and Done.",
+      "expected_output": "Orchestrator treats this as spec approval (2c → approved) and moves the issue to the board's equivalent of ready — Todo — at 2d, then proceeds to planning (3a). It should not move the issue to In Progress before the plan is approved.",
+      "files": [],
+      "assertions": [
+        {"text": "maps_ready_to_todo: Response moves the issue to 'Todo', the board's equivalent of ready", "type": "qualitative"},
+        {"text": "does_not_skip_gate: Response does NOT move the issue to 'In Progress' or 'Code Review' yet", "type": "qualitative"},
+        {"text": "proceeds_to_planning: Response moves on to the implementation plan (3a/3b)", "type": "qualitative"}
+      ]
+    },
+    {
+      "id": 14,
+      "name": "slack-read-only",
+      "prompt": "The PR for ENG-12 is merged. Wrap it up. Heads up, our Slack integration is read-only.",
+      "expected_output": "Orchestrator moves the issue to done (5a), composes the team notification (5b) but does not try to send it, and hands the user the draft with the intended channel or recipient.",
+      "files": [],
+      "assertions": [
+        {"text": "does_not_send: Response does NOT attempt to send a Slack message", "type": "qualitative"},
+        {"text": "hands_over_draft: Response gives the user a drafted message linking the PR and issue, to send themselves", "type": "qualitative"},
+        {"text": "updates_status_to_done: Response moves the issue to done", "type": "qualitative"}
       ]
     }
   ]

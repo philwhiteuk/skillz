@@ -24,12 +24,15 @@ When a step says "delegate to the X skill", that is an instruction to **actually
 
 | Skill | Invoke as | Source |
 |-------|-----------|--------|
-| Spec | `develop:spec` | [`../spec/SKILL.md`](../spec/SKILL.md) |
-| Plan | `develop:plan` | [`../plan/SKILL.md`](../plan/SKILL.md) |
-| Slack message | `develop:slack-message` | [`../slack-message/SKILL.md`](../slack-message/SKILL.md) |
-| Code review (4c) | `code-review-and-quality` | external — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) |
+| Spec | `spec` | [`../spec/SKILL.md`](../spec/SKILL.md) |
+| Plan | `plan` | [`../plan/SKILL.md`](../plan/SKILL.md) |
+| Slack message | `slack-message` | [`../slack-message/SKILL.md`](../slack-message/SKILL.md) |
+| Code review (4c) | the first installed reviewer in **Self-review (4c)** | external — e.g. [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) |
+| Issue tracker (optional) | e.g. `github-projects` | external — see **Issue tracker** |
 
-The relative links are for human readers navigating this repo; at runtime you invoke each skill by name, you do not read the file in lieu of invoking it. The code-review skill is **not** part of this repo — it is an external skill resolved by the Skill tool at runtime, so it has no relative link.
+**Resolve each name against the installed skills.** The same skill may be installed with a plugin prefix (`develop:spec`) or without one (`spec`, e.g. when symlinked from `~/.agents/skills`). Invoke whichever variant appears in your available-skills list; never hard-code the prefix.
+
+The relative links are for human readers navigating this repo; at runtime you invoke each skill by name, you do not read the file in lieu of invoking it. The code-review skills are **not** part of this repo — they are external skills resolved by the Skill tool at runtime, so they have no relative link.
 
 This is imperative. Do not:
 
@@ -62,17 +65,68 @@ Mark completed steps with `[x]`, the current step in **bold** with an arrow, and
 
 After the checklist, get straight to the action: present the deliverable, ask the question, or start the work. No preamble about your reasoning process.
 
+## Project conventions
+
+Before 1a, read the project's own rules. Where they speak, they override this skill's defaults for naming, statuses, gates and commits:
+
+- `AGENTS.md`, `CLAUDE.md`, `CONSTITUTION.md`, `CONTRIBUTING.md` — at the repo root, and in `.github/` or `docs/`
+- The PR template (`.github/PULL_REQUEST_TEMPLATE.md` or `.github/PULL_REQUEST_TEMPLATE/`)
+- Issue templates (`.github/ISSUE_TEMPLATE/`, `.gitlab/issue_templates/`)
+- Merge settings (`gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`). On a squash-only repo the PR title becomes the commit subject on main, so commit-subject rules apply to the PR title.
+
+Note what they say about each of these and carry it through the session:
+
+| Convention | Replaces | Used at |
+|------------|----------|---------|
+| Branch name, PR title, PR body | **Naming conventions** | 4b |
+| Status names and how to set them | **Lifecycle states** | 1c, 2b, 2d, 3d, 4b, 5a |
+| Parent / epic linking | **Parent issues** | 1c, 5a |
+| Testing rules (e.g. test-first) | — | 4a |
+| Docs rules (e.g. docs change in the same PR) | — | 4a |
+| Changes that need a person's approval (e.g. a new runtime dependency) | — | 3c |
+| Check command (e.g. `mise run check`) | — | 4e |
+| Commit message format | — | 4a, 4d, 4f |
+
+Where the project is silent, use this skill's defaults. Project rules can add gates; they never remove 2c, 3c or 4e, or the draft-first PR.
+
 ## Issue tracker
 
 This workflow uses an issue tracker as the single source of truth — specs go in the description, plans go in comments, status reflects reality.
 
-The issue tracker could be any tool available via MCP (JIRA, Linear, GitHub Issues, etc.). To determine which one to use:
+The issue tracker could be JIRA, Linear, GitHub Issues, GitLab or anything else, reached through an MCP server, a CLI, or a skill. To determine which one to use, and how:
 
 1. If the user provides a link or issue key, infer the tracker from its format
-2. If issue-tracking MCP tools are available, use them
-3. If multiple trackers are available and it's ambiguous, ask the user once: "I see tools for both X and Y — which do you use for tracking?"
+2. If the project docs name the tracker or how to drive it (CLI commands, project board, field and option IDs), follow them
+3. If a tracker skill is installed (e.g. `github-projects`), invoke it for tracker operations instead of hand-rolling commands
+4. If issue-tracking MCP tools are available, use them
+5. Otherwise look for an authenticated CLI: `gh auth status`, `glab auth status`, `jira me`, `linear whoami`
+6. If multiple trackers are available and it's ambiguous, ask the user once: "I see tools for both X and Y — which do you use for tracking?"
 
-Never hardcode a specific tracker. Use whatever tools are available.
+Never hardcode a specific tracker. Use whatever is available.
+
+## Lifecycle states
+
+Steps refer to lifecycle states, not tracker status names:
+
+| State | Meaning | Entered at |
+|-------|---------|------------|
+| not-ready | Logged and being refined; spec not yet approved | 1c, 2b |
+| ready | Spec approved, waiting to be picked up | 2d |
+| in-progress | Plan approved, code being written | 3d |
+| in-review | Draft PR open | 4b |
+| done | PR merged | 5a |
+
+Map each state to the project's own status using its docs — e.g. not-ready → Refinement, ready → Todo, in-progress → In Progress, in-review → Code Review, done → Done. If the docs give no mapping and the tracker's statuses don't make it obvious, ask once, listing the tracker's actual statuses, and reuse the answer for the rest of the session. If the tracker has no status for a state, skip that transition rather than misuse another.
+
+Set statuses the way the project documents — that may be CLI commands with field and option IDs (e.g. `gh project item-edit`) rather than an MCP tool. Before 5a, check whether the tracker already moved the issue on merge; don't transition it twice.
+
+## Parent issues
+
+When the issue belongs to an epic or parent — the user says so, the spec names one, or the issue already links one:
+
+- **Native support** — if the tracker supports sub-issues or parent links (GitHub sub-issues, JIRA parent, Linear parent) and they are enabled, link the child to the parent at 1c. Some GitHub Enterprise servers have sub-issues disabled; if the API rejects the link, fall through.
+- **Project convention** — otherwise follow the repo's convention. A common one is a `**Parent:** #N` line in the child's body plus an entry in the parent's Sub-Tasks checklist. Add both at 1c; tick the checklist entry at 5a.
+- **Neither** — add a `Parent: <link>` line to the child's body and tell the user the tracker can't link them natively.
 
 ## The workflow
 
@@ -80,26 +134,44 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 
 | Step | Name | Type | Action |
 |------|------|------|--------|
+| 0 | Project conventions | auto | Read the project's rules (see **Project conventions**) once per session, before anything else. |
 | 1a | Issue exists? | ? decision | Parse the prompt for an issue key or link. Search available issue-tracker tools. If found, load it and go to 1d. If not: "Should I create a tracking issue for this?" |
-| 1b | Track issue | auto | **Invoke the `develop:spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the issue description. _(Why: it owns the spec format and work-type classification — do not write the description yourself or from this file's description of it.)_ |
-| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. Save the key/link for the rest of the workflow. |
+| 1b | Track issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the issue description. _(Why: it owns the spec format and work-type classification — do not write the description yourself or from this file's description of it.)_ |
+| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. If the spec came from a repo issue template, pass that template's labels, project and assignees explicitly (e.g. `--label "type: story" --project "<board>"`) — creating with an explicit body skips them. The new issue starts in **not-ready**. If it has a parent, link it (see **Parent issues**). Save the key/link for the rest of the workflow. |
 | 1d | Name session | auto | Rename the session to `ISSUE-KEY: short subtitle` — the subtitle is 3–5 words summarising the issue title. Use `/rename` to set it. |
 | 2a | Spec exists? | ? decision | Check the issue description for structured acceptance criteria. A bare title or one-liner means no spec. If no spec → 2b. If spec exists → 3a. |
-| 2b | Write spec to issue | auto | **Invoke the `develop:spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the spec, then **immediately write the result into the issue description** — both happen in this step, no pausing between them. Whatever the skill outputs is the spec; do not reshape it to match this file. Update the issue description via the tracker API before doing anything else — the issue tracker is the user's review surface, not chat. **Do NOT transition the issue status yet — that only happens at 2d.** |
+| 2b | Write spec to issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the spec, then **immediately write the result into the issue description** — both happen in this step, no pausing between them. Whatever the skill outputs is the spec; do not reshape it to match this file. Update the issue description via the tracker API before doing anything else — the issue tracker is the user's review surface, not chat. **The only status move allowed here is into not-ready, if the issue isn't there already — ready waits for 2d.** |
 | 2c | Spec approval | **[human]** | Say "Spec written to [ISSUE-KEY](<link>) — take a look and let me know if anything needs changing." Do not dump the spec into chat. Wait for the user to confirm in the tracker. If no → back to 2b. If yes → 2d. |
-| 2d | Update status | auto | **Only run this step after the user has confirmed approval at 2c.** Transition the issue to reflect refinement progress. |
+| 2d | Update status | auto | **Only run this step after the user has confirmed approval at 2c.** Move the issue to **ready**. |
 | 3a | Plan exists? | ? decision | Check issue comments for an implementation plan (ordered steps, technical approach). If no plan → 3b. If plan exists → 3c. |
-| 3b | Plan to issue | auto | **Invoke the `develop:plan` skill** ([`../plan/SKILL.md`](../plan/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the implementation plan. Whatever structure and clarification behaviour the skill defines is authoritative — including any blocking questions it front-loads (a legitimate pause, since a plan built on a wrong assumption is worse than a short wait). Once the skill has produced the plan, **immediately persist it as a comment on the issue** — the issue tracker is the user's review surface, not chat. Do not pause for anything other than the blocking ambiguity the skill itself raises; never to ask permission to write or post the plan. |
-| 3c | Plan approval | **[human]** | Say "Implementation plan added to [ISSUE-KEY](<link>) — take a look and let me know if the approach works." Do not dump the plan into chat. Wait for the user to confirm in the tracker. If no → back to 3b. If yes → 3d. |
-| 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately transition the issue to "In Progress" (or equivalent). Do this before writing any code. |
-| 4a | Implement | auto | Execute the plan step by step. Write code, run tests, verify. |
-| 4b | Draft PR | auto | Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. Link back to the issue. Branch name: `<issue-id>/<kebab-case-issue-name>`. PR title: `[<issue-id>] - <brief description>`. After opening, transition the issue status to "In Review" (or equivalent). |
-| 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available). Hand it *only* the PR link/number and instruct it to **invoke the `code-review-and-quality` skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill. _(This skill lives in an external repo — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) — not in this repo, so there is no relative link; it is resolved at runtime by the Skill tool, not from this file.)_ Have it **also invoke the `develop:no-word-salad` skill** ([`../no-word-salad/SKILL.md`](../no-word-salad/SKILL.md)) as a second lens over the same diff, flagging as inline comments any word salad it enforces against — verbose filler, stock AI phrasing, hedging, and code comments that narrate what the code already says. Additionally flag code comments that reference the current issue tracker — these narrate provenance, not intent, and should be removed unless a reader would genuinely need that context (e.g. a documented concession). It posts each finding as an inline PR review comment using whatever severity scheme that skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
+| 3b | Plan to issue | auto | **Invoke the `plan` skill** ([`../plan/SKILL.md`](../plan/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the implementation plan. Whatever structure and clarification behaviour the skill defines is authoritative — including any blocking questions it front-loads (a legitimate pause, since a plan built on a wrong assumption is worse than a short wait). Once the skill has produced the plan, **immediately persist it as a comment on the issue** — the issue tracker is the user's review surface, not chat. Do not pause for anything other than the blocking ambiguity the skill itself raises; never to ask permission to write or post the plan. |
+| 3c | Plan approval | **[human]** | Say "Implementation plan added to [ISSUE-KEY](<link>) — take a look and let me know if the approach works." Do not dump the plan into chat. If the plan includes anything the project says needs a person's approval (e.g. a new runtime dependency), name it in this message so the approval covers it explicitly. Wait for the user to confirm in the tracker. If no → back to 3b. If yes → 3d. |
+| 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately move the issue to **in-progress**. Do this before writing any code. |
+| 4a | Implement | auto | Execute the plan step by step, following the project's testing rules (e.g. write the failing test first where it requires test-first) and its commit message format. Update docs in the same branch where the project requires it. Run tests, verify. |
+| 4b | Draft PR | auto | Name the branch, PR title and PR body by the project's conventions, falling back to **Naming conventions**. If the session is already on a branch made for this work (e.g. a worktree hook created it via EnterWorktree), rename that branch rather than creating another. Fill the project's PR template if it has one, and put the tracker's closing keyword in the body (`Closes #N` on GitHub and GitLab) so merging closes the issue; where the tracker has none, link the issue. Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. After opening, move the issue to **in-review**. |
+| 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available, otherwise a general-purpose one). Hand it *only* the PR link/number, the reviewer skill chosen per **Self-review (4c)** below, and that section's slop lens. Instruct it to **invoke the chosen skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill — then apply the slop lens to the same diff. It posts each finding as an inline PR review comment using whatever severity scheme the skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
 | 4d | Address self-review | auto | Read the sub-agent's review comments. Fix every blocking/required finding (the highest-severity tiers in whatever scheme the review skill used) in follow-up commit(s); for lower-severity findings, apply judgment — address or reply with a brief rationale. Push the fixes, then reply to **and resolve** each thread you addressed — resolving is mandatory (see **Resolving review threads** below); leave a thread open only when it still needs the human. Do **not** spawn another review pass or mark the PR ready. → 4e. |
-| 4e | PR approval | **[human]** | Say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → mark PR ready for review, then 5a. |
+| 4e | PR approval | **[human]** | First run the project's check command (e.g. `mise run check`, or whatever its docs name). It must pass; fix and rerun until it does. Then say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → rerun the check command if anything changed since it last passed, mark PR ready for review, then 5a. |
 | 4f | Address feedback | auto | Apply feedback, then return to 4e. |
-| 5a | Update status | auto | Transition the issue to "Done" or "Merged". |
-| 5b | Notify team | auto | **Invoke the `develop:slack-message` skill** ([`../slack-message/SKILL.md`](../slack-message/SKILL.md)) **via the Skill tool** and follow its current instructions to compose and send a Slack message linking the PR and issue. Do not format the message yourself. |
+| 5a | Update status | auto | Move the issue to **done**. If the parent keeps a checklist, tick this issue's entry. |
+| 5b | Notify team | auto | **Invoke the `slack-message` skill** ([`../slack-message/SKILL.md`](../slack-message/SKILL.md)) **via the Skill tool** and follow its current instructions to compose a Slack message linking the PR and issue. Do not format the message yourself. Send it only if a Slack tool with write access is available and its instructions allow sending. Otherwise — the Slack server is read-only, failed to connect, or isn't configured — skip the send and hand the user the draft with the intended channel or recipient, saying why it wasn't sent. If `slack-message` isn't installed, draft a short message linking both yourself. |
+
+## Self-review (4c)
+
+Pick the reviewer skill — the first one installed wins:
+
+1. A review skill the project's docs name
+2. `code-review-and-quality` ([addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md))
+3. A language-specific PR review skill that matches the diff (e.g. `typescript-development:typescript-pr-review`, `python-development:python-pr-review`)
+4. The built-in `code-review` skill, with `--comment` so findings land as inline PR comments
+
+Give the sub-agent this slop lens to apply to the diff and the PR description alongside the review skill, posting findings as inline comments:
+
+- **Word salad** — filler, stock AI phrasing, hedging, words you wouldn't say to a colleague, the point buried under a build-up.
+- **Comments that narrate the visible** — a comment that restates what the code already says. Comments explain intent the code can't show.
+- **Tracker references in code comments** — issue keys and ticket links narrate provenance, not intent. Flag them for removal unless a reader would genuinely need the context (e.g. a documented concession).
+
+If the `no-word-salad` skill ([`../no-word-salad/SKILL.md`](../no-word-salad/SKILL.md)) is installed, the sub-agent invokes it for the full rubric. The lens above stands on its own when it isn't.
 
 ## Resolving review threads
 
@@ -133,23 +205,24 @@ After the loop, only threads that genuinely still need the human's input should 
 
 ## Naming conventions
 
-Always apply these patterns — no exceptions, no variations:
+The project's conventions come first. Use these only where it doesn't specify:
 
 | Artefact | Pattern | Example |
 |----------|---------|---------|
-| Branch | `<issue-id>/<kebab-case-issue-name>` | `PROJ-42/add-user-auth` |
-| PR title | `[<issue-id>] - <brief description>` | `[PROJ-42] - Add user authentication` |
+| Branch | `<issue-key>/<kebab-case-issue-name>`, or `<number>-<kebab-case-issue-name>` for numeric IDs | `PROJ-42/add-user-auth`, `31-agent-project-docs` |
+| PR title | `[<issue-key>] - <brief description>` | `[PROJ-42] - Add user authentication` |
+| PR body | Summary, then the closing keyword or issue link | `Closes #31` |
 
-- **Issue ID**: the canonical key from the tracker (e.g. `PROJ-42`, `#123`)
+- **Issue key**: the canonical key from the tracker (e.g. `PROJ-42`). Never put `#` in a branch name — the shell reads it as the start of a comment.
 - **Branch name**: lowercase, hyphens only, derived from the issue title (strip punctuation, truncate if long)
-- **PR description**: brief description in the title should be human-readable — not a copy of the branch slug
+- **PR title**: the brief description should be human-readable — not a copy of the branch slug. On a squash-merge repo the title becomes the commit subject on main, so if the project restricts commit subjects (e.g. "plain sentences, no prefixes"), drop the `[<issue-key>]` prefix and follow that rule; the body carries the issue link.
 
 ## Determining where you are
 
 Your first job is to figure out the current step. Check these signals in order:
 
 1. **What the user said** — most reliable. "Let's refine this" → 2a. "Just code it" → 4a.
-2. **Issue status** — "To Do" vs "In Progress" vs "In Review"
+2. **Issue status** — its lifecycle state, mapped from the tracker's status
 3. **Issue description** — does it have a structured spec?
 4. **Issue comments** — is there an implementation plan?
 5. **Linked PRs** — is there an open PR?
@@ -159,13 +232,15 @@ Quick reference:
 - Issue found/created, session not yet renamed → 1d
 - Issue exists, bare description → 2a
 - Issue has spec, no plan → 3a
-- Issue has spec + plan, status is "To Do" → 3d
-- Issue "In Progress", no PR → 4a
-- Issue "In Progress", PR just opened (no self-review yet) → 4c
-- Issue "In Progress", PR self-reviewed and findings addressed → 4e
+- Issue has spec + plan, state is not-ready or ready → 3d
+- Issue in-progress, no PR → 4a
+- Issue in-review, PR just opened (no self-review yet) → 4c
+- Issue in-review, PR self-reviewed and findings addressed → 4e
 - PR merged → 5a
 
 ## Principles
+
+**The project's rules win.** Read them at step 0. Where they set a naming, status, gate or commit rule, follow it over this file's default.
 
 **Always use clickable links.** Reference every issue, PR, or tracker resource as a full markdown URL — never a bare ID. The user should always be one click from the artefact.
 
@@ -173,11 +248,11 @@ Quick reference:
 
 **PRs are always drafts.** Use `gh pr create --draft`; never mark a PR ready without explicit approval at 4e. The user reviews the diff before the team does.
 
-**Self-review with fresh eyes.** The 4c reviewer is a *new* sub-agent with no memory of this session — reviewing your own work in-context misses what you already believe is correct. It applies two lenses over the diff — `code-review-and-quality` for correctness and `no-word-salad` for slop and over-explanation. It annotates the PR; you address at 4d (Critical/required fixed before 4e, lesser findings get a fix or a brief reply) and **resolve** each thread you handled. The PR stays draft throughout.
+**Self-review with fresh eyes.** The 4c reviewer is a *new* sub-agent with no memory of this session — reviewing your own work in-context misses what you already believe is correct. It applies two lenses over the diff — the best installed review skill for correctness, and the slop lens for word salad and over-explanation. It annotates the PR; you address at 4d (Critical/required fixed before 4e, lesser findings get a fix or a brief reply) and **resolve** each thread you handled. The PR stays draft throughout.
 
-**Status is gated.** Never transition issue status before its approval gate: 2d after 2c, 3d after 3c, and 4b's update on draft-PR open.
+**Status is gated.** Never move an issue past its approval gate: ready only at 2d (after 2c), in-progress only at 3d (after 3c), in-review only once the draft PR is open at 4b.
 
-**Delegate format by invoking the owning skill.** Issue descriptions → `develop:spec` (1b/2b), plans → `develop:plan` (3b), Slack → `develop:slack-message` (5b). Invoke the skill and follow its current output — never write these formats from this file's summary, which drifts; when they disagree, the invoked skill wins (see **Delegation — the skill is the source of truth** above).
+**Delegate format by invoking the owning skill.** Issue descriptions → `spec` (1b/2b), plans → `plan` (3b), Slack → `slack-message` (5b). Invoke the skill and follow its current output — never write these formats from this file's summary, which drifts; when they disagree, the invoked skill wins (see **Delegation — the skill is the source of truth** above).
 
 **Fall back only when genuinely blocked.** Missing access or ambiguous tracker = ask. "I need to read the spec" = not blocked, that's the job.
 
