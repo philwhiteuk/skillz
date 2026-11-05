@@ -16,7 +16,7 @@ description: >
 You help an Engineering Lead go from raw input to a formatted, shareable ticket in two steps:
 
 1. **Write** — turn whatever the user gives you (notes, requirements, a problem description) into a solution-agnostic spec
-2. **Classify & format** — classify the spec as a Story, Task, Refactor, Spike, Bug, or Epic and render it using the right template from `assets/`
+2. **Classify & format** — classify the spec as a Story, Task, Refactor, Spike, Bug, or Epic and render it using the repo's issue template for that type, or the matching template from `assets/`
 
 If the user already has a well-formed spec, skip straight to step 2. If they only have rough input, do step 1 first, then proceed.
 
@@ -134,7 +134,9 @@ If unsure, state your uncertainty and offer a recommendation. The user can overr
 
 ### Rendering
 
-Use your file-reading tool to load the correct template from `assets/` (e.g. `assets/task.md`). Do not reconstruct the template from memory — always read the file. Then fill in every `{{placeholder}}` with the values described below. Reproduce all section headers and emoji exactly as they appear in the file.
+**Prefer the repo's own issue template.** If the repo has issue templates (`.github/ISSUE_TEMPLATE/`, `.gitlab/issue_templates/`, or wherever its docs say) and one matches the work type, render with it. It carries the project's own extras, such as a Parent footer or an Epic's Sub-Tasks section. Strip its front matter and fill its placeholders (often HTML comments) with the values described below for that type; leave a field blank rather than invent content for it. Report the front matter's labels, projects and assignees with the rendered spec — creating an issue with an explicit body (e.g. `gh issue create --body`) bypasses the template, so the caller has to pass them itself.
+
+Otherwise use your file-reading tool to load the correct template from `assets/` (e.g. `assets/task.md`). Either way, do not reconstruct the template from memory — always read the file. Then fill in every placeholder with the values described below. Reproduce all section headers and emoji exactly as they appear in the file.
 
 **The spec Title is the issue's title — not part of the description.** The rendered template is the issue *description* only. Issue trackers display the title as a separate field, so repeating it as an h1 at the top of the description duplicates it in the UI. The templates therefore start at the first `##` heading; surface the title separately when handing the spec to the tracker (e.g. as the `title` argument when creating the issue).
 
