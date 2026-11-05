@@ -27,12 +27,12 @@ When a step says "delegate to the X skill", that is an instruction to **actually
 | Spec | `spec` | [`../spec/SKILL.md`](../spec/SKILL.md) |
 | Plan | `plan` | [`../plan/SKILL.md`](../plan/SKILL.md) |
 | Slack message | `slack-message` | [`../slack-message/SKILL.md`](../slack-message/SKILL.md) |
-| Code review (4c) | `code-review-and-quality` | external — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) |
+| Code review (4c) | the first installed reviewer in **Self-review (4c)** | external — e.g. [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) |
 | Issue tracker (optional) | e.g. `github-projects` | external — see **Issue tracker** |
 
 **Resolve each name against the installed skills.** The same skill may be installed with a plugin prefix (`develop:spec`) or without one (`spec`, e.g. when symlinked from `~/.agents/skills`). Invoke whichever variant appears in your available-skills list; never hard-code the prefix.
 
-The relative links are for human readers navigating this repo; at runtime you invoke each skill by name, you do not read the file in lieu of invoking it. The code-review skill is **not** part of this repo — it is an external skill resolved by the Skill tool at runtime, so it has no relative link.
+The relative links are for human readers navigating this repo; at runtime you invoke each skill by name, you do not read the file in lieu of invoking it. The code-review skills are **not** part of this repo — they are external skills resolved by the Skill tool at runtime, so they have no relative link.
 
 This is imperative. Do not:
 
@@ -149,12 +149,29 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately move the issue to **in-progress**. Do this before writing any code. |
 | 4a | Implement | auto | Execute the plan step by step. Write code, run tests, verify. |
 | 4b | Draft PR | auto | Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. Link back to the issue. Branch name: `<issue-id>/<kebab-case-issue-name>`. PR title: `[<issue-id>] - <brief description>`. After opening, move the issue to **in-review**. |
-| 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available). Hand it *only* the PR link/number and instruct it to **invoke the `code-review-and-quality` skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill. _(This skill lives in an external repo — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) — not in this repo, so there is no relative link; it is resolved at runtime by the Skill tool, not from this file.)_ Have it **also invoke the `no-word-salad` skill** ([`../no-word-salad/SKILL.md`](../no-word-salad/SKILL.md)) as a second lens over the same diff, flagging as inline comments any word salad it enforces against — verbose filler, stock AI phrasing, hedging, and code comments that narrate what the code already says. Additionally flag code comments that reference the current issue tracker — these narrate provenance, not intent, and should be removed unless a reader would genuinely need that context (e.g. a documented concession). It posts each finding as an inline PR review comment using whatever severity scheme that skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
+| 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available, otherwise a general-purpose one). Hand it *only* the PR link/number, the reviewer skill chosen per **Self-review (4c)** below, and that section's slop lens. Instruct it to **invoke the chosen skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill — then apply the slop lens to the same diff. It posts each finding as an inline PR review comment using whatever severity scheme the skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
 | 4d | Address self-review | auto | Read the sub-agent's review comments. Fix every blocking/required finding (the highest-severity tiers in whatever scheme the review skill used) in follow-up commit(s); for lower-severity findings, apply judgment — address or reply with a brief rationale. Push the fixes, then reply to **and resolve** each thread you addressed — resolving is mandatory (see **Resolving review threads** below); leave a thread open only when it still needs the human. Do **not** spawn another review pass or mark the PR ready. → 4e. |
 | 4e | PR approval | **[human]** | Say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → mark PR ready for review, then 5a. |
 | 4f | Address feedback | auto | Apply feedback, then return to 4e. |
 | 5a | Update status | auto | Move the issue to **done**. If the parent keeps a checklist, tick this issue's entry. |
 | 5b | Notify team | auto | **Invoke the `slack-message` skill** ([`../slack-message/SKILL.md`](../slack-message/SKILL.md)) **via the Skill tool** and follow its current instructions to compose and send a Slack message linking the PR and issue. Do not format the message yourself. |
+
+## Self-review (4c)
+
+Pick the reviewer skill — the first one installed wins:
+
+1. A review skill the project's docs name
+2. `code-review-and-quality` ([addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md))
+3. A language-specific PR review skill that matches the diff (e.g. `typescript-development:typescript-pr-review`, `python-development:python-pr-review`)
+4. The built-in `code-review` skill, with `--comment` so findings land as inline PR comments
+
+Give the sub-agent this slop lens to apply to the diff and the PR description alongside the review skill, posting findings as inline comments:
+
+- **Word salad** — filler, stock AI phrasing, hedging, words you wouldn't say to a colleague, the point buried under a build-up.
+- **Comments that narrate the visible** — a comment that restates what the code already says. Comments explain intent the code can't show.
+- **Tracker references in code comments** — issue keys and ticket links narrate provenance, not intent. Flag them for removal unless a reader would genuinely need the context (e.g. a documented concession).
+
+If the `no-word-salad` skill ([`../no-word-salad/SKILL.md`](../no-word-salad/SKILL.md)) is installed, the sub-agent invokes it for the full rubric. The lens above stands on its own when it isn't.
 
 ## Resolving review threads
 
@@ -230,7 +247,7 @@ Quick reference:
 
 **PRs are always drafts.** Use `gh pr create --draft`; never mark a PR ready without explicit approval at 4e. The user reviews the diff before the team does.
 
-**Self-review with fresh eyes.** The 4c reviewer is a *new* sub-agent with no memory of this session — reviewing your own work in-context misses what you already believe is correct. It applies two lenses over the diff — `code-review-and-quality` for correctness and `no-word-salad` for slop and over-explanation. It annotates the PR; you address at 4d (Critical/required fixed before 4e, lesser findings get a fix or a brief reply) and **resolve** each thread you handled. The PR stays draft throughout.
+**Self-review with fresh eyes.** The 4c reviewer is a *new* sub-agent with no memory of this session — reviewing your own work in-context misses what you already believe is correct. It applies two lenses over the diff — the best installed review skill for correctness, and the slop lens for word salad and over-explanation. It annotates the PR; you address at 4d (Critical/required fixed before 4e, lesser findings get a fix or a brief reply) and **resolve** each thread you handled. The PR stays draft throughout.
 
 **Status is gated.** Never move an issue past its approval gate: ready only at 2d (after 2c), in-progress only at 3d (after 3c), in-review only once the draft PR is open at 4b.
 
