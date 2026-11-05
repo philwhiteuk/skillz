@@ -62,6 +62,30 @@ Mark completed steps with `[x]`, the current step in **bold** with an arrow, and
 
 After the checklist, get straight to the action: present the deliverable, ask the question, or start the work. No preamble about your reasoning process.
 
+## Project conventions
+
+Before 1a, read the project's own rules. Where they speak, they override this skill's defaults for naming, statuses, gates and commits:
+
+- `AGENTS.md`, `CLAUDE.md`, `CONSTITUTION.md`, `CONTRIBUTING.md` — at the repo root, and in `.github/` or `docs/`
+- The PR template (`.github/PULL_REQUEST_TEMPLATE.md` or `.github/PULL_REQUEST_TEMPLATE/`)
+- Issue templates (`.github/ISSUE_TEMPLATE/`, `.gitlab/issue_templates/`)
+- Merge settings (`gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebaseMergeAllowed`). On a squash-only repo the PR title becomes the commit subject on main, so commit-subject rules apply to the PR title.
+
+Note what they say about each of these and carry it through the session:
+
+| Convention | Replaces | Used at |
+|------------|----------|---------|
+| Branch name, PR title, PR body | **Naming conventions** | 4b |
+| Status names and how to set them | **Lifecycle states** | 1c, 2b, 2d, 3d, 4b, 5a |
+| Parent / epic linking | **Parent issues** | 1c, 5a |
+| Testing rules (e.g. test-first) | — | 4a |
+| Docs rules (e.g. docs change in the same PR) | — | 4a |
+| Changes that need a person's approval (e.g. a new runtime dependency) | — | 3c |
+| Check command (e.g. `mise run check`) | — | 4e |
+| Commit message format | — | 4a, 4d, 4f |
+
+Where the project is silent, use this skill's defaults. Project rules can add gates; they never remove 2c, 3c or 4e, or the draft-first PR.
+
 ## Issue tracker
 
 This workflow uses an issue tracker as the single source of truth — specs go in the description, plans go in comments, status reflects reality.
@@ -80,6 +104,7 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 
 | Step | Name | Type | Action |
 |------|------|------|--------|
+| 0 | Project conventions | auto | Read the project's rules (see **Project conventions**) once per session, before anything else. |
 | 1a | Issue exists? | ? decision | Parse the prompt for an issue key or link. Search available issue-tracker tools. If found, load it and go to 1d. If not: "Should I create a tracking issue for this?" |
 | 1b | Track issue | auto | **Invoke the `develop:spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the issue description. _(Why: it owns the spec format and work-type classification — do not write the description yourself or from this file's description of it.)_ |
 | 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. Save the key/link for the rest of the workflow. |
@@ -166,6 +191,8 @@ Quick reference:
 - PR merged → 5a
 
 ## Principles
+
+**The project's rules win.** Read them at step 0. Where they set a naming, status, gate or commit rule, follow it over this file's default.
 
 **Always use clickable links.** Reference every issue, PR, or tracker resource as a full markdown URL — never a bare ID. The user should always be one click from the artefact.
 
