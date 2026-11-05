@@ -120,6 +120,14 @@ Map each state to the project's own status using its docs — e.g. not-ready →
 
 Set statuses the way the project documents — that may be CLI commands with field and option IDs (e.g. `gh project item-edit`) rather than an MCP tool. Before 5a, check whether the tracker already moved the issue on merge; don't transition it twice.
 
+## Parent issues
+
+When the issue belongs to an epic or parent — the user says so, the spec names one, or the issue already links one:
+
+- **Native support** — if the tracker supports sub-issues or parent links (GitHub sub-issues, JIRA parent, Linear parent) and they are enabled, link the child to the parent at 1c. Some GitHub Enterprise servers have sub-issues disabled; if the API rejects the link, fall through.
+- **Project convention** — otherwise follow the repo's convention. A common one is a `**Parent:** #N` line in the child's body plus an entry in the parent's Sub-Tasks checklist. Add both at 1c; tick the checklist entry at 5a.
+- **Neither** — add a `Parent: <link>` line to the child's body and tell the user the tracker can't link them natively.
+
 ## The workflow
 
 Four phases, each with decision points and action steps. Steps marked **[human]** are pause points — present your work and wait for explicit approval.
@@ -129,7 +137,7 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 0 | Project conventions | auto | Read the project's rules (see **Project conventions**) once per session, before anything else. |
 | 1a | Issue exists? | ? decision | Parse the prompt for an issue key or link. Search available issue-tracker tools. If found, load it and go to 1d. If not: "Should I create a tracking issue for this?" |
 | 1b | Track issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the issue description. _(Why: it owns the spec format and work-type classification — do not write the description yourself or from this file's description of it.)_ |
-| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. The new issue starts in **not-ready**. Save the key/link for the rest of the workflow. |
+| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. The new issue starts in **not-ready**. If it has a parent, link it (see **Parent issues**). Save the key/link for the rest of the workflow. |
 | 1d | Name session | auto | Rename the session to `ISSUE-KEY: short subtitle` — the subtitle is 3–5 words summarising the issue title. Use `/rename` to set it. |
 | 2a | Spec exists? | ? decision | Check the issue description for structured acceptance criteria. A bare title or one-liner means no spec. If no spec → 2b. If spec exists → 3a. |
 | 2b | Write spec to issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the spec, then **immediately write the result into the issue description** — both happen in this step, no pausing between them. Whatever the skill outputs is the spec; do not reshape it to match this file. Update the issue description via the tracker API before doing anything else — the issue tracker is the user's review surface, not chat. **The only status move allowed here is into not-ready, if the issue isn't there already — ready waits for 2d.** |
@@ -145,7 +153,7 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 4d | Address self-review | auto | Read the sub-agent's review comments. Fix every blocking/required finding (the highest-severity tiers in whatever scheme the review skill used) in follow-up commit(s); for lower-severity findings, apply judgment — address or reply with a brief rationale. Push the fixes, then reply to **and resolve** each thread you addressed — resolving is mandatory (see **Resolving review threads** below); leave a thread open only when it still needs the human. Do **not** spawn another review pass or mark the PR ready. → 4e. |
 | 4e | PR approval | **[human]** | Say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → mark PR ready for review, then 5a. |
 | 4f | Address feedback | auto | Apply feedback, then return to 4e. |
-| 5a | Update status | auto | Move the issue to **done**. |
+| 5a | Update status | auto | Move the issue to **done**. If the parent keeps a checklist, tick this issue's entry. |
 | 5b | Notify team | auto | **Invoke the `slack-message` skill** ([`../slack-message/SKILL.md`](../slack-message/SKILL.md)) **via the Skill tool** and follow its current instructions to compose and send a Slack message linking the PR and issue. Do not format the message yourself. |
 
 ## Resolving review threads
