@@ -104,6 +104,22 @@ The issue tracker could be JIRA, Linear, GitHub Issues, GitLab or anything else,
 
 Never hardcode a specific tracker. Use whatever is available.
 
+## Lifecycle states
+
+Steps refer to lifecycle states, not tracker status names:
+
+| State | Meaning | Entered at |
+|-------|---------|------------|
+| not-ready | Logged and being refined; spec not yet approved | 1c, 2b |
+| ready | Spec approved, waiting to be picked up | 2d |
+| in-progress | Plan approved, code being written | 3d |
+| in-review | Draft PR open | 4b |
+| done | PR merged | 5a |
+
+Map each state to the project's own status using its docs — e.g. not-ready → Refinement, ready → Todo, in-progress → In Progress, in-review → Code Review, done → Done. If the docs give no mapping and the tracker's statuses don't make it obvious, ask once, listing the tracker's actual statuses, and reuse the answer for the rest of the session. If the tracker has no status for a state, skip that transition rather than misuse another.
+
+Set statuses the way the project documents — that may be CLI commands with field and option IDs (e.g. `gh project item-edit`) rather than an MCP tool. Before 5a, check whether the tracker already moved the issue on merge; don't transition it twice.
+
 ## The workflow
 
 Four phases, each with decision points and action steps. Steps marked **[human]** are pause points — present your work and wait for explicit approval.
@@ -113,23 +129,23 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 0 | Project conventions | auto | Read the project's rules (see **Project conventions**) once per session, before anything else. |
 | 1a | Issue exists? | ? decision | Parse the prompt for an issue key or link. Search available issue-tracker tools. If found, load it and go to 1d. If not: "Should I create a tracking issue for this?" |
 | 1b | Track issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the issue description. _(Why: it owns the spec format and work-type classification — do not write the description yourself or from this file's description of it.)_ |
-| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. Save the key/link for the rest of the workflow. |
+| 1c | Create issue | auto | Create the issue using available tracker tools. Use the **rendered spec from step 1b** as the issue description. The new issue starts in **not-ready**. Save the key/link for the rest of the workflow. |
 | 1d | Name session | auto | Rename the session to `ISSUE-KEY: short subtitle` — the subtitle is 3–5 words summarising the issue title. Use `/rename` to set it. |
 | 2a | Spec exists? | ? decision | Check the issue description for structured acceptance criteria. A bare title or one-liner means no spec. If no spec → 2b. If spec exists → 3a. |
-| 2b | Write spec to issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the spec, then **immediately write the result into the issue description** — both happen in this step, no pausing between them. Whatever the skill outputs is the spec; do not reshape it to match this file. Update the issue description via the tracker API before doing anything else — the issue tracker is the user's review surface, not chat. **Do NOT transition the issue status yet — that only happens at 2d.** |
+| 2b | Write spec to issue | auto | **Invoke the `spec` skill** ([`../spec/SKILL.md`](../spec/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the spec, then **immediately write the result into the issue description** — both happen in this step, no pausing between them. Whatever the skill outputs is the spec; do not reshape it to match this file. Update the issue description via the tracker API before doing anything else — the issue tracker is the user's review surface, not chat. **The only status move allowed here is into not-ready, if the issue isn't there already — ready waits for 2d.** |
 | 2c | Spec approval | **[human]** | Say "Spec written to [ISSUE-KEY](<link>) — take a look and let me know if anything needs changing." Do not dump the spec into chat. Wait for the user to confirm in the tracker. If no → back to 2b. If yes → 2d. |
-| 2d | Update status | auto | **Only run this step after the user has confirmed approval at 2c.** Transition the issue to reflect refinement progress. |
+| 2d | Update status | auto | **Only run this step after the user has confirmed approval at 2c.** Move the issue to **ready**. |
 | 3a | Plan exists? | ? decision | Check issue comments for an implementation plan (ordered steps, technical approach). If no plan → 3b. If plan exists → 3c. |
 | 3b | Plan to issue | auto | **Invoke the `plan` skill** ([`../plan/SKILL.md`](../plan/SKILL.md)) **via the Skill tool** and follow its current instructions to produce the implementation plan. Whatever structure and clarification behaviour the skill defines is authoritative — including any blocking questions it front-loads (a legitimate pause, since a plan built on a wrong assumption is worse than a short wait). Once the skill has produced the plan, **immediately persist it as a comment on the issue** — the issue tracker is the user's review surface, not chat. Do not pause for anything other than the blocking ambiguity the skill itself raises; never to ask permission to write or post the plan. |
 | 3c | Plan approval | **[human]** | Say "Implementation plan added to [ISSUE-KEY](<link>) — take a look and let me know if the approach works." Do not dump the plan into chat. Wait for the user to confirm in the tracker. If no → back to 3b. If yes → 3d. |
-| 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately transition the issue to "In Progress" (or equivalent). Do this before writing any code. |
+| 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately move the issue to **in-progress**. Do this before writing any code. |
 | 4a | Implement | auto | Execute the plan step by step. Write code, run tests, verify. |
-| 4b | Draft PR | auto | Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. Link back to the issue. Branch name: `<issue-id>/<kebab-case-issue-name>`. PR title: `[<issue-id>] - <brief description>`. After opening, transition the issue status to "In Review" (or equivalent). |
+| 4b | Draft PR | auto | Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. Link back to the issue. Branch name: `<issue-id>/<kebab-case-issue-name>`. PR title: `[<issue-id>] - <brief description>`. After opening, move the issue to **in-review**. |
 | 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available). Hand it *only* the PR link/number and instruct it to **invoke the `code-review-and-quality` skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill. _(This skill lives in an external repo — [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills/blob/main/skills/code-review-and-quality/SKILL.md) — not in this repo, so there is no relative link; it is resolved at runtime by the Skill tool, not from this file.)_ Have it **also invoke the `no-word-salad` skill** ([`../no-word-salad/SKILL.md`](../no-word-salad/SKILL.md)) as a second lens over the same diff, flagging as inline comments any word salad it enforces against — verbose filler, stock AI phrasing, hedging, and code comments that narrate what the code already says. Additionally flag code comments that reference the current issue tracker — these narrate provenance, not intent, and should be removed unless a reader would genuinely need that context (e.g. a documented concession). It posts each finding as an inline PR review comment using whatever severity scheme that skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
 | 4d | Address self-review | auto | Read the sub-agent's review comments. Fix every blocking/required finding (the highest-severity tiers in whatever scheme the review skill used) in follow-up commit(s); for lower-severity findings, apply judgment — address or reply with a brief rationale. Push the fixes, then reply to **and resolve** each thread you addressed — resolving is mandatory (see **Resolving review threads** below); leave a thread open only when it still needs the human. Do **not** spawn another review pass or mark the PR ready. → 4e. |
 | 4e | PR approval | **[human]** | Say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → mark PR ready for review, then 5a. |
 | 4f | Address feedback | auto | Apply feedback, then return to 4e. |
-| 5a | Update status | auto | Transition the issue to "Done" or "Merged". |
+| 5a | Update status | auto | Move the issue to **done**. |
 | 5b | Notify team | auto | **Invoke the `slack-message` skill** ([`../slack-message/SKILL.md`](../slack-message/SKILL.md)) **via the Skill tool** and follow its current instructions to compose and send a Slack message linking the PR and issue. Do not format the message yourself. |
 
 ## Resolving review threads
@@ -180,7 +196,7 @@ Always apply these patterns — no exceptions, no variations:
 Your first job is to figure out the current step. Check these signals in order:
 
 1. **What the user said** — most reliable. "Let's refine this" → 2a. "Just code it" → 4a.
-2. **Issue status** — "To Do" vs "In Progress" vs "In Review"
+2. **Issue status** — its lifecycle state, mapped from the tracker's status
 3. **Issue description** — does it have a structured spec?
 4. **Issue comments** — is there an implementation plan?
 5. **Linked PRs** — is there an open PR?
@@ -190,10 +206,10 @@ Quick reference:
 - Issue found/created, session not yet renamed → 1d
 - Issue exists, bare description → 2a
 - Issue has spec, no plan → 3a
-- Issue has spec + plan, status is "To Do" → 3d
-- Issue "In Progress", no PR → 4a
-- Issue "In Progress", PR just opened (no self-review yet) → 4c
-- Issue "In Progress", PR self-reviewed and findings addressed → 4e
+- Issue has spec + plan, state is not-ready or ready → 3d
+- Issue in-progress, no PR → 4a
+- Issue in-review, PR just opened (no self-review yet) → 4c
+- Issue in-review, PR self-reviewed and findings addressed → 4e
 - PR merged → 5a
 
 ## Principles
@@ -208,7 +224,7 @@ Quick reference:
 
 **Self-review with fresh eyes.** The 4c reviewer is a *new* sub-agent with no memory of this session — reviewing your own work in-context misses what you already believe is correct. It applies two lenses over the diff — `code-review-and-quality` for correctness and `no-word-salad` for slop and over-explanation. It annotates the PR; you address at 4d (Critical/required fixed before 4e, lesser findings get a fix or a brief reply) and **resolve** each thread you handled. The PR stays draft throughout.
 
-**Status is gated.** Never transition issue status before its approval gate: 2d after 2c, 3d after 3c, and 4b's update on draft-PR open.
+**Status is gated.** Never move an issue past its approval gate: ready only at 2d (after 2c), in-progress only at 3d (after 3c), in-review only once the draft PR is open at 4b.
 
 **Delegate format by invoking the owning skill.** Issue descriptions → `spec` (1b/2b), plans → `plan` (3b), Slack → `slack-message` (5b). Invoke the skill and follow its current output — never write these formats from this file's summary, which drifts; when they disagree, the invoked skill wins (see **Delegation — the skill is the source of truth** above).
 
