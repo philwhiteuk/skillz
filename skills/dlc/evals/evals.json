@@ -46,6 +46,7 @@
       "assertions": [
         {"text": "recognizes_approval: Response treats the user message as plan approval and moves forward", "type": "qualitative"},
         {"text": "updates_status: Response mentions moving the issue to in-progress (or the tracker's equivalent status) before coding", "type": "qualitative"},
+        {"text": "assigns_user: Response also assigns the issue to the current user (where the tracker supports it) when moving it to in-progress", "type": "qualitative"},
         {"text": "begins_implementation: Response starts coding/implementation, does not re-plan or re-spec", "type": "qualitative"}
       ]
     },
