@@ -148,7 +148,7 @@ Four phases, each with decision points and action steps. Steps marked **[human]*
 | 3c | Plan approval | **[human]** | Say "Implementation plan added to [ISSUE-KEY](<link>) — take a look and let me know if the approach works." Do not dump the plan into chat. If the plan includes anything the project says needs a person's approval (e.g. a new runtime dependency), name it in this message so the approval covers it explicitly. Wait for the user to confirm in the tracker. If no → back to 3b. If yes → 3d. |
 | 3d | Update status | auto | **Only run this step after the user has confirmed approval at 3c.** Immediately move the issue to **in-progress**. Do this before writing any code. |
 | 4a | Implement | auto | Execute the plan step by step, following the project's testing rules (e.g. write the failing test first where it requires test-first) and its commit message format. Update docs in the same branch where the project requires it. Run tests, verify. |
-| 4b | Draft PR | auto | Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. Link back to the issue. Branch name: `<issue-id>/<kebab-case-issue-name>`. PR title: `[<issue-id>] - <brief description>`. After opening, move the issue to **in-review**. |
+| 4b | Draft PR | auto | Name the branch, PR title and PR body by the project's conventions, falling back to **Naming conventions**. If the session is already on a branch made for this work (e.g. a worktree hook created it via EnterWorktree), rename that branch rather than creating another. Fill the project's PR template if it has one, and put the tracker's closing keyword in the body (`Closes #N` on GitHub and GitLab) so merging closes the issue; where the tracker has none, link the issue. Open a **draft** PR using `gh pr create --draft` — never omit `--draft`. After opening, move the issue to **in-review**. |
 | 4c | Self-review | auto | **Spawn a fresh sub-agent with no additional context from this session** (use your agent/subagent tool; the `code-reviewer` agent type is the natural fit if available, otherwise a general-purpose one). Hand it *only* the PR link/number, the reviewer skill chosen per **Self-review (4c)** below, and that section's slop lens. Instruct it to **invoke the chosen skill via the Skill tool** and follow that skill's current instructions over the PR diff — do not have it review from a paraphrase of the skill — then apply the slop lens to the same diff. It posts each finding as an inline PR review comment using whatever severity scheme the skill defines. The empty context is the whole point: a reviewer blind to how the code was written catches what the author cannot. The PR stays in **draft**. → 4d. |
 | 4d | Address self-review | auto | Read the sub-agent's review comments. Fix every blocking/required finding (the highest-severity tiers in whatever scheme the review skill used) in follow-up commit(s); for lower-severity findings, apply judgment — address or reply with a brief rationale. Push the fixes, then reply to **and resolve** each thread you addressed — resolving is mandatory (see **Resolving review threads** below); leave a thread open only when it still needs the human. Do **not** spawn another review pass or mark the PR ready. → 4e. |
 | 4e | PR approval | **[human]** | First run the project's check command (e.g. `mise run check`, or whatever its docs name). It must pass; fix and rerun until it does. Then say "Draft PR opened at <link>, self-reviewed and findings addressed — please review and let me know when it's ready to mark as ready for review." Wait for explicit user approval before converting to ready-for-review. **Never** mark the PR as ready for review without the user's say-so. If feedback → 4f. If approved → rerun the check command if anything changed since it last passed, mark PR ready for review, then 5a. |
@@ -205,16 +205,17 @@ After the loop, only threads that genuinely still need the human's input should 
 
 ## Naming conventions
 
-Always apply these patterns — no exceptions, no variations:
+The project's conventions come first. Use these only where it doesn't specify:
 
 | Artefact | Pattern | Example |
 |----------|---------|---------|
-| Branch | `<issue-id>/<kebab-case-issue-name>` | `PROJ-42/add-user-auth` |
-| PR title | `[<issue-id>] - <brief description>` | `[PROJ-42] - Add user authentication` |
+| Branch | `<issue-key>/<kebab-case-issue-name>`, or `<number>-<kebab-case-issue-name>` for numeric IDs | `PROJ-42/add-user-auth`, `31-agent-project-docs` |
+| PR title | `[<issue-key>] - <brief description>` | `[PROJ-42] - Add user authentication` |
+| PR body | Summary, then the closing keyword or issue link | `Closes #31` |
 
-- **Issue ID**: the canonical key from the tracker (e.g. `PROJ-42`, `#123`)
+- **Issue key**: the canonical key from the tracker (e.g. `PROJ-42`). Never put `#` in a branch name — the shell reads it as the start of a comment.
 - **Branch name**: lowercase, hyphens only, derived from the issue title (strip punctuation, truncate if long)
-- **PR description**: brief description in the title should be human-readable — not a copy of the branch slug
+- **PR title**: the brief description should be human-readable — not a copy of the branch slug. On a squash-merge repo the title becomes the commit subject on main, so if the project restricts commit subjects (e.g. "plain sentences, no prefixes"), drop the `[<issue-key>]` prefix and follow that rule; the body carries the issue link.
 
 ## Determining where you are
 
